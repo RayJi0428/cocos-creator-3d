@@ -2,21 +2,20 @@
   "ver": "4.0.1",
   "importer": "javascript",
   "imported": true,
-  "uuid": "f390e38e-f204-4589-8dfd-b1bdb23a4fda",
+  "uuid": "acd63595-c29f-41c0-862f-4f29d1023238",
   "files": [
     ".js"
   ],
   "subMetas": {},
   "userData": {
     "importAsPlugin": true,
-    "moduleId": "project:///assets/scripts/proto/Protocol.Game.Shared.js",
-    "importerSettings": 0,
+    "moduleId": "project:///assets/thirdy/protobuf/protobuf.js",
     "isPlugin": true,
     "loadPluginInWeb": true,
     "loadPluginInNative": true,
     "loadPluginInEditor": false,
     "dependencies": [
-      "acd63595-c29f-41c0-862f-4f29d1023238"
+      "cf2df035-55a3-45a3-ada1-27c0499fb143"
     ]
   }
 }
