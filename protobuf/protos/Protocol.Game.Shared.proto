@@ -1,0 +1,271 @@
+syntax = "proto3";
+package Protocol.Game.Shared;
+
+//-------------------- 定義封包ID --------------------
+
+enum ResultCode
+{
+  //連線狀況
+  NO_ERROR                            =  0; // 沒有錯誤
+  JOIN_GAME_FAIL                      =  1; // 進入遊戲失敗
+  LEAVE_GAME_FAIL                     =  2; // 離開遊戲失敗
+          
+  //下注狀況           
+  LIMIT_LOCAL_MIN                     =  3; // 低於單注下限
+  LIMIT_LOCAL_MAX                     =  4; // 超過單注上限
+  LIMIT_GLOBAL_MAX                    =  5; // 超過總額上限
+  CREDIT_NOT_ENOUGH                   =  6; // 玩家餘額不足
+  TIME_OVER                           =  7; // 非下注時間內下注
+  WRONG_BET_ID                        =  8; // 下注區ID不合法
+  WRONG_CHIP_ID                       =  9; // 籌碼ID不合法
+  WRONG_COMMAND_ID                    = 10; // 命令ID不合法
+  WRONG_PARAMETER                     = 11; // 參數不合法
+  COMMAND_DENY                        = 12; // 命令不允許
+  ERROR_VERSION                       = 13; // 版本錯誤
+  MAINTAIN                            = 14; // 維護中
+  SERVICE_OVERTIME                    = 15; // 服務資料逾時
+  KICKBACK_ERROR                      = 16; // 反水取得錯誤
+  POINT_INIT_ERROR                    = 17; // 玩家取得點數失敗(初始化的時候)
+  POINT_REQUESTING                    = 18; // 玩家點數攜點中
+  POINT_RETURNING                     = 19; // 玩家點數歸還中
+  POINT_CHANGING                      = 20; // 玩家點數異動中
+  POINT_USING                         = 21; // 玩家點數使用中
+          
+  //斷線重連與狀態回復狀況      
+  RECOVER_FAIL                        = 31; // 斷線重連或狀態回復失敗
+
+  //其他問題           
+  OTHER_ERROR                         = 99; // 其他錯誤
+}
+
+enum CreditHandleState
+{
+  CREDIT_HANDLE_STATE_DEFAULT         =  0; // 預設
+  REQUEST                             =  1; // 點數全攜中
+  RETURN                              =  2; // 點數歸還中
+  USING                               =  3; // 點數使用中
+}
+
+enum SystemMessageType
+{
+  SYSTEM_MESSAGE_TYPE_DEFAULT         =  0; // 預設
+  NOTIFY_PLAYER_OFFLINE_LEAVE         =  1; // 單一GS維護時通知前端斷線
+}
+
+//command ID
+enum MessageID_Shared
+{
+  SHARED_DEFAULT                      =     0; // 預設
+  UC_TO_GL_SEND_TEST                  = 19000; // 傳送測試封包
+  UC_TO_GL_INIT_GAME                  = 19001; // 玩家初始化遊戲
+  UC_TO_GL_LEAVE_GAME                 = 19002; // 玩家離開遊戲
+  UC_TO_GL_CHANGE_CHIP                = 19003; // 玩家變更籌碼設定(紀錄玩家行為)
+  UC_TO_GL_UPDATE_CREDIT              = 19004; // 要求更新餘額
+  UC_TO_GL_ACTIVITY_ANIM              = 19005; // 活動開始演示
+  UC_TO_GL_ACTIVITY_REQ               = 19006; // 活動要求
+  UC_TO_GL_ACTIVITY_ANIM_END          = 19007; // 活動演示結束
+  UC_TO_GL_RESX_LOAD_FINISH           = 19008; // 通知資源載完
+  UC_TO_GL_SHARED_CHEAT               = 19009; // 密技測試
+  UC_TO_GL_SEND_TICK                  = 19999; // 傳送心跳
+
+  GL_TO_UC_SEND_TEST_ACK              = 29000; // 傳送測試回覆
+  GL_TO_UC_INIT_GAME                  = 29001; // 回傳玩家初始化結果
+  GL_TO_UC_LEAVE_GAME                 = 29002; // 回傳玩家離開遊戲結果
+  GL_TO_UC_CHANGE_CHIP                = 29003; // 回傳玩家變更籌碼結果
+  GL_TO_UC_UPDATE_CREDIT              = 29004; // 回傳更新餘額
+  GL_TO_UC_ACTIVITY_ACK               = 29005; // 活動回應
+  GL_TO_UC_SHARED_CHEAT               = 29009; // 回應密技測試
+  GL_TO_UC_SEND_TICK_ACK              = 29999; // 傳送心跳回覆
+  
+  GL_TO_UC_SYSTEM_MESSAGE             = 29203; // 通知系統訊息
+  GL_TO_UC_UPDATE_ONLINE              = 29204; // 更新上線人數
+  GL_TO_UC_SYSTEM_MAINTAIN            = 29205; // 通知玩家維護流程
+  GL_TO_UC_MAINTAIN_LEAVE             = 29206; // 通知玩家維護踢離
+  GL_TO_UC_IDLE_LEAVE                 = 29207; // 玩家閒置踢離遊戲
+  GL_TO_UC_TICK_OVERTIME_LEAVE        = 29208; // 玩家心跳逾時踢離遊戲
+  GL_TO_UC_PACKET_ERROR               = 29209; // 封包編號檢查錯誤
+  GL_TO_UC_CREDIT_HANDLE              = 29210; // 點數異動狀態
+
+  GL_TO_UC_ACTIVITY_START             = 29211; //通知活動開始
+  GL_TO_UC_ACTIVITY_END               = 29212; //通知活動結束
+}
+
+//--------------- 定義封包格式(C -> S) ---------------
+
+//UC_TO_GL_SEND_TEST         傳送測試封包
+message UC_TO_GL_SEND_TEST_T {
+  int32 iTest                        =  1; //
+}
+
+//UC_TO_GL_INIT_GAME         玩家初始化遊戲
+message UC_TO_GL_INIT_GAME_T {
+  int32 sharedProtoVersion           =  1; // 共通協定使用版本號
+  int32 gameProtoVersion             =  2; // 遊戲協定使用版本號
+  int32 enterType                    =  3; // 進入遊戲種類 1:一般進入  2:狀態回復進入  3:斷線重連進入
+  int32 serialNumber                 =  4; // 流水號 (代表第幾次發 19001 ,  從0開始)
+}
+
+//UC_TO_GL_LEAVE_GAME        玩家離開遊戲
+message UC_TO_GL_LEAVE_GAME_T {
+  bool isManualSend                  =  1; // 是否手動離開遊戲
+}
+
+//UC_TO_GL_CHANGE_CHIP       玩家變更籌碼設定(紀錄玩家行為)
+message UC_TO_GL_CHANGE_CHIP_T {
+  repeated int32 chipIdList          =  1; // 長度為 5 的陣列，儲存 chipId
+}
+
+//UC_TO_GL_UPDATE_CREDIT     要求更新餘額
+message UC_TO_GL_UPDATE_CREDIT_T {
+}
+
+//UC_TO_GL_SEND_TICK         傳送心跳
+message UC_TO_GL_SEND_TICK_T {
+  int32 gameID                       =  1; // 遊戲識別號
+  int32 tableID                      =  2; // 桌號
+  double timeStamp                   =  3; // 時間戳記
+}
+
+//UC_TO_GL_ACTIVITY_ANIM 活動開始演示
+message UC_TO_GL_ACTIVITY_ANIM_T {
+  int32 ActivityID                   =  1; // 活動編號
+}
+
+//UC_TO_GL_ACTIVITY_ANIM_END 活動結束演示
+message UC_TO_GL_ACTIVITY_ANIM_END_T {
+  int32 ActivityID                   =  1; // 活動編號
+}
+
+//UC_TO_GL_RESX_LOAD_FINISH
+message UC_TO_GL_RESX_LOAD_FINISH_T {
+  int32 resxID                       =  1; // 資源編號 (0: 幸運彩金, 1: 喜從天降, 99999: 全部開放)
+
+  //  共用資源為編號 0 ~ 99999
+  //     EX:         0 幸運彩金
+  //     EX:         1 喜從天降
+  //     EX:     99999 共用資源全部載完
+  //  遊戲資源編號為 GameID + 編號(五碼)
+  //     EX: 103200001 甜心 BG影片資源
+}
+
+//UC_TO_GL_SHARED_CHEAT            密技(字串或type溝通)
+message UC_TO_GL_SHARED_CHEAT_T {
+  int32 iType                        =  1; // 指定功能
+  repeated int32 arrValue            =  2; // 參數
+  string jsonContent				 =  3; // Json格式的密技內容
+}
+
+//UC_TO_GL_ACTIVITY_REQ 活動要求
+message UC_TO_GL_ACTIVITY_REQ_T {
+  int32 ActivityID                   =  1; // 活動編號
+  int32 SID                          =  2; // 活動物品編號
+}
+
+//--------------- 定義封包格式(S -> C) ---------------
+
+//GL_TO_UC_SEND_TEST_ACK         傳送心跳
+message GL_TO_UC_SEND_TEST_ACK_T {
+  int32 iTest                        =  1; //
+}
+
+//GL_TO_UC_INIT_GAME         回傳玩家初始化結果
+message GL_TO_UC_INIT_GAME_T {
+  int32 resultCode                   =  1; // 參考 ResultCode 
+  int32 sharedProtoVersion           =  2; // 共通協定使用版本號
+  int32 gameProtoVersion             =  3; // 遊戲協定使用版本號
+  int32 enterType                    =  4; // 進入遊戲種類 1:一般進入  2:狀態回復進入  3:斷線重連進入
+  int32 serialNumber                 =  5; // 流水號 (代表第幾次發 19001 ,  從0開始)
+}
+
+//GL_TO_UC_LEAVE_GAME        回傳玩家離開遊戲結果
+message GL_TO_UC_LEAVE_GAME_T {
+  int32 resultCode                   =  1; // 參考 ResultCode
+  bool isReserved                    =  2; // 是否保留座
+}
+
+//GL_TO_UC_CHANGE_CHIP       回傳玩家變更籌碼結果
+message GL_TO_UC_CHANGE_CHIP_T {
+  int32 resultCode                   =  1; // 參考 ResultCode
+}
+
+//GL_TO_UC_UPDATE_CREDIT     回傳更新餘額
+message GL_TO_UC_UPDATE_CREDIT_T {
+  int64 credit                       =  1;
+}
+
+//GL_TO_UC_SEND_TICK_ACK     傳送心跳回覆
+message GL_TO_UC_SEND_TICK_ACK_T {
+  int32 gameID                      =  1; // 遊戲識別號
+  int32 tableID                     =  2; // 桌號
+  double timeStamp                  =  3; // 時間戳記
+  bool active                       =  4; // 是否由Server主動發送的
+}
+
+//GL_TO_UC_SYSTEM_MESSAGE    通知系統訊息
+message GL_TO_UC_SYSTEM_MESSAGE_T {
+  int32 infoType                    =  1; // intValue 對照 請參考 enum SystemMessageType
+  string infoMsg                    =  2;
+}
+
+//GL_TO_UC_UPDATE_ONLINE     更新上線人數
+message GL_TO_UC_UPDATE_ONLINE_T {
+  int32 onlineNum                   =  1; // 線上人數
+}
+
+//GL_TO_UC_SYSTEM_MAINTAIN   通知玩家維護流程
+message GL_TO_UC_SYSTEM_MAINTAIN_T {
+}
+
+//GL_TO_UC_MAINTAIN_LEAVE    通知玩家維護踢離
+message GL_TO_UC_MAINTAIN_LEAVE_T {
+}
+
+//GL_TO_UC_IDLE_LEAVE玩家閒置踢離遊戲
+message GL_TO_UC_IDLE_LEAVE_T {
+}
+
+//GL_TO_UC_TICK_OVERTIME_LEAVE玩家心跳逾時踢離遊戲
+message GL_TO_UC_TICK_OVERTIME_LEAVE_T {
+}
+
+//GL_TO_UC_PACKET_ERROR封包編號檢查錯誤
+message GL_TO_UC_PACKET_ERROR_T {
+}
+
+//GL_TO_UC_PACKET_ERROR點數異動狀態
+message GL_TO_UC_CREDIT_HANDLE_T {
+  int32 state                       =  1; // 點數狀態
+  int64 credit                      =  2; // 點數
+  int64 gap                         =  3; // 異動點數量
+}
+
+//GL_TO_UC_ACTIVITY_START 活動開始
+message GL_TO_UC_ACTIVITY_START_T {
+  int32 ActivityID                  =  1; // 活動編號
+  int32 ActivityCount               =  2; // 紅包掉下來之數量 
+  // 財神降臨: -1(前端需一直落下紅包, 直到Server通知活動結束才不落)  
+  // 神秘寶箱: 20(前端演示20個數量, 演完通知Server )
+}
+
+//GL_TO_UC_ACTIVITY_END活動結束
+message GL_TO_UC_ACTIVITY_END_T {
+  int32 ActivityID                  =  1; // 活動編號
+  int64 TotalWin                    =  2; // 活動總贏分
+  int64 Credit                      =  3; // 玩家目前點數(已包含贏分)
+}
+
+//GL_TO_UC_ACTIVITY_ACK活動回應
+message GL_TO_UC_ACTIVITY_ACK_T {
+  int32 ActivityID                  =  1; // 活動編號
+  int32 SID                         =  2; // 活動物品編號
+  bool IsWin                        =  3; // 是否中獎
+  int64 WinPoint                    =  4; // 中獎分數
+  int32 iResultCode                 =  5; // 參考resultCode 如果紅包抽完, 會給COMMAND_DENY (12)
+}
+
+//GL_TO_UC_SHARED_CHEAT            密技結果
+message GL_TO_UC_SHARED_CHEAT_T {
+  int32 errorCode                   =  1; // 參考 ErrorCode
+  repeated int32 arrValue           =  2; // 
+}
+

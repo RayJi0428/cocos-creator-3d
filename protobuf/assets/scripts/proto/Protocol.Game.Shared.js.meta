@@ -1,0 +1,16 @@
+{
+  "ver": "4.0.1",
+  "importer": "javascript",
+  "imported": true,
+  "uuid": "f390e38e-f204-4589-8dfd-b1bdb23a4fda",
+  "files": [
+    ".js",
+    ".trans"
+  ],
+  "subMetas": {},
+  "userData": {
+    "importAsPlugin": false,
+    "moduleId": "project:///assets/scripts/proto/Protocol.Game.Shared.js",
+    "importerSettings": 0
+  }
+}
