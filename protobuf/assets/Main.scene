@@ -32,7 +32,7 @@
     "_globals": {
       "__id__": 9
     },
-    "_id": "2098bfed-37a0-4b5d-b529-80fbdd29daf6"
+    "_id": "f46876e4-e81b-4931-b493-6d367be385e7"
   },
   {
     "__type__": "cc.Node",
@@ -230,7 +230,7 @@
       "y": 0,
       "z": 0
     },
-    "_id": "c2vkio0a5PP6WI+rM4efKG"
+    "_id": "a8c4ybg+dNUKp6BaoznbBx"
   },
   {
     "__type__": "a7873kzKzREPYrpiKx7THzu",
@@ -240,7 +240,7 @@
       "__id__": 7
     },
     "_enabled": true,
-    "_id": "6aZZ7oNjpCIoz50sk/1FnG"
+    "_id": "14bjcxX89BLIk8wE8WEhPp"
   },
   {
     "__type__": "cc.SceneGlobals",

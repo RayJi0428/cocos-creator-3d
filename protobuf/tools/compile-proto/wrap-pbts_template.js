@@ -3,7 +3,7 @@ const fs = require('fs-extra');
 const ps = require('path');
 
 (async () => {
-    const file = ps.join(__dirname, '..', '..', 'assets', 'scripts', 'proto', 'Protocol.Game.Shared.d.ts');
+    const file = ps.join(__dirname, '..', '..', 'assets', 'scripts', 'proto', '#file_prefix#.d.ts');
     const original = await fs.readFile(file, 'utf-8');
     await fs.writeFile(
         file,

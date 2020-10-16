@@ -1,0 +1,247 @@
+syntax = "proto3";
+package Protocol.Game.Roulette;
+
+//遊戲階段
+enum Phase {
+  PHASE_DEFAULT                     = 0; // 預設值
+  BET                               = 1; // 下注階段
+  SPIN                              = 2; // 擲骰階段
+  SETTLE                            = 3; // 結算階段
+}
+
+//遊戲時序
+enum Timing {
+  Timing_DEFAULT                    = 0; // 預設值
+  BEGIN                             = 1; // 階段開始
+  END                               = 2; // 階段結束
+  ING                               = 3; // 階段進行中
+  NONE                              = 4; // 無關時序
+}
+
+//-------------------- 定義封包ID --------------------
+//Roulette Message ID
+enum MessageID_Roulette
+{
+  MESSAGEID_ROULETTE_DEFAULT        =        0;  //
+  UC_TO_GL_BET                      = 10001001;  // 玩家下注
+  UC_TO_GL_CALL                     = 10001002;  // 玩家套餐下注
+  UC_TO_GL_UNDO                     = 10001003;  // 玩家下注返回上一步
+  UC_TO_GL_CLEAR                    = 10001004;  // 玩家清除所有籌碼
+  UC_TO_GL_REPEAT                   = 10001005;  // 玩家重新下注(籌碼與前一局相同)
+  UC_TO_GL_CHEAT_CODE               = 10001006;  // 使用作弊代碼
+
+  GL_TO_UC_BET                      = 20001001;  // 回傳玩家下注結果
+  GL_TO_UC_CALL                     = 20001002;  // 回傳玩家套餐下注結果
+  GL_TO_UC_UNDO                     = 20001003;  // 回傳玩家返回上一步結果
+  GL_TO_UC_CLEAR                    = 20001004;  // 回傳玩家清除下注結果
+  GL_TO_UC_REPEAT                   = 20001005;  // 回傳玩家重新下注結果
+  GL_TO_UC_RETURN_REPEAT            = 20001006;  // 回傳玩家上局下注金額陣列
+  GL_TO_UC_CHEAT_CODE               = 20001007;  // 回傳密技代碼結果  
+
+  GL_TO_UC_INIT_INFO                = 20001101;  // 初始化玩家資訊
+  GL_TO_UC_INIT_PHASE               = 20001102;  // 初始化玩家階段
+  GL_TO_UC_INIT_HISTORY             = 20001103;  // 初始化歷史紀錄
+
+  GL_TO_UC_CHANGE_PHASE             = 20001201;  // 通知階段改變
+  GL_TO_UC_UPDATE_TABLE             = 20001202;  // 更新桌面下注金額 (下注階段時定期刷新)
+  GL_TO_UC_SPIN_NUMBER              = 20001203;  // 通知開球號碼
+  GL_TO_UC_SETTLE_RESULT            = 20001204;  // 通知結算玩家輸贏結果
+  GL_TO_FL_UPDATE_ROUND_INFO        = 20001205;  // 更新局資訊
+  GL_TO_UC_UPDATE_POINT_INFO        = 20001206;  // 更新點數資訊
+}
+
+
+//--------------- 定義封包格式(C -> S) ---------------
+
+//UC_TO_GL_BET                    玩家下注
+message UC_TO_GL_BET_T
+{
+  int32 betFieldId                 = 1; //下注區識別號
+  int32 chipId                     = 2; //籌碼識別號
+  int32 roundNumber                = 3; //識別局數
+}
+
+//UC_TO_GL_CALL                   玩家套餐下注
+message UC_TO_GL_CALL_T
+{
+  int32 calledBetId                = 1; //套餐下注識別號
+  int32 chipId                     = 2; //籌碼識別號
+  int32 roundNumber                = 3; //識別局數
+}
+
+//UC_TO_GL_UNDO                   玩家下注返回上一步
+message UC_TO_GL_UNDO_T
+{
+  int32 roundNumber                = 1; //識別局數
+}
+
+//UC_TO_GL_CLEAR                  玩家清除所有籌碼
+message UC_TO_GL_CLEAR_T
+{
+  int32 roundNumber                = 1; //識別局數
+}
+
+//UC_TO_GL_REPEAT                 玩家重新下注(籌碼與前一局相同)
+message UC_TO_GL_REPEAT_T
+{
+  int32 roundNumber                = 1; //識別局數
+}
+
+//UC_TO_GL_CHEAT_CODE             使用作弊代碼
+message UC_TO_GL_CHEAT_CODE_T
+{
+  int32 spinNumber                 = 1; //輪盤盤面數字
+}
+
+//--------------- 定義封包格式(S -> C) ---------------
+
+//GL_TO_UC_BET                    回傳玩家下注結果
+message GL_TO_UC_BET_T
+{
+  int32 betFieldId                 = 1; //下注區識別號
+  int32 resultCode                 = 2; //參考 resultCode
+  repeated int64 betMoney          = 3; //回傳下注區所有金額
+  int64 credit                     = 4; //玩家餘額剩多少
+  int32 roundNumber                = 5; //識別局數
+}
+
+//GL_TO_UC_CALL                   回傳玩家套餐下注結果
+message GL_TO_UC_CALL_T
+{
+  int32 calledBetId                = 1; //套餐下注識別號
+  int32 resultCode                 = 2; //參考 resultCode
+  repeated int64 betMoney          = 3; //回傳下注區所有金額
+  int64 credit                     = 4; //玩家餘額剩多少
+  int32 roundNumber                = 5; //識別局數
+}
+
+//GL_TO_UC_UNDO                   回傳玩家返回上一步結果
+message GL_TO_UC_UNDO_T
+{
+  int32 resultCode                 = 1; //參考 resultCode
+  int64 credit                     = 2; //玩家餘額剩多少
+  int32 roundNumber                = 3; //識別局數
+}
+
+//GL_TO_UC_CLEAR                  回傳玩家清除下注結果
+message GL_TO_UC_CLEAR_T
+{
+  int32 resultCode                 = 1; //參考 resultCode
+  int64 credit                     = 2; //玩家餘額剩多少
+  int32 roundNumber                = 3; //識別局數
+}
+
+//GL_TO_UC_REPEAT                 回傳玩家重新下注結果
+message GL_TO_UC_REPEAT_T
+{
+  int32 resultCode                 = 1; //參考 resultCode
+  int64 credit                     = 2; //玩家餘額剩多少
+  int32 roundNumber                = 3; //識別局數
+}
+
+//GL_TO_UC_RETURN_REPEAT          回傳玩家上局下注金額陣列
+message GL_TO_UC_RETURN_REPEAT_T
+{
+  int64 totalBetPoint              = 1; //回傳上局下注區所有金額
+  repeated int64 betPoints         = 2; //回傳上局下注金額陣列
+}
+
+//GL_TO_UC_CHEAT_CODE             回傳代碼結果
+message GL_TO_UC_CHEAT_CODE_T
+{
+  int32 result                     =  1; // 0:成功, 1:失敗, 2:失敗-沒有此牌組
+}
+
+//GL_TO_UC_INIT_INFO              初始化玩家資訊
+message GL_TO_UC_INIT_INFO_T
+{
+  int32 tableId                    =  1; //當前桌號
+  int32 onlineNum                  =  2; //線上人數
+  repeated double betOdds          =  3; //長度為 157 的陣列，表示每個下注區的賠率
+  repeated int64 minBetPoint       =  4; //長度為 157 的陣列，表示每個下注區金額下限
+  repeated int64 maxBetPoint       =  5; //長度為 157 的陣列，表示每個下注區金額上限
+  int32 betTime                    =  6; //下注階段所花的毫秒數
+  int32 spinTime                   =  7; //開球階段所花的毫秒數
+  int32 settleTime                 =  8; //結算階段所花的毫秒數
+  int64 tableMinBetPoint           =  9; //桌下注區金額下限
+  int64 tableMaxBetPoint           = 10; //桌下注區金額上限
+  int32 roundNumber                = 11; //局數
+  
+  //value 0: 5點, 1: 10點, 2: 20點, 3: 50點, 4: 100點, 5: 500點, 6: 1千點, 7: 5千點, 8: 1萬點
+  repeated int32 defaultChips      =  12; //顯示預設籌碼的陣列 長度為 5
+
+  int32 enterType                  = 21; // 進入遊戲的種類  1:一般進入  2:狀態回復進入  3:斷線重連進入
+  int32 recoverSuccess             = 22; // 是否狀態回復成功 (0:失敗 1:成功 2:配桌中)
+  int32 serialNumber               = 23; // 流水號(前端的幾次發19001封包 從0開始)
+}
+
+//GL_TO_UC_INIT_PHASE             初始化玩家階段
+message GL_TO_UC_INIT_PHASE_T
+{
+  // 狀態資訊
+  Phase phase                      =  1; //當下的階段
+  int32 countdown                  =  2; //剩下的倒數時間 (若沒有倒數時間回傳 -1)
+  
+  // Bet phase
+  int64 totalBetPoint              =  3; //回傳下注區所有金額
+  repeated int64 betPoints         =  4; //回傳下注金額陣列
+  repeated int64 personalBetMoney  =  6; //回傳下注金額陣列(當局玩家個人的)
+
+  // Spin phase
+  int32 spinNumber                 =  5; //開球號碼
+  
+  // Settle phase (斷連用)
+  int64 totalWinPoint              = 11;  //回傳玩家總共贏得金額 (包含本金)
+  repeated int64 winPoints         = 12;  //回傳玩家贏錢的下注金額陣列 (包含本金)
+}
+
+//GL_TO_UC_INIT_HISTORY           初始化歷史紀錄
+message GL_TO_UC_INIT_HISTORY_T
+{
+  repeated int32 trend       		= 1; //儲存遊戲歷史紀錄，單局分別有以下資訊:
+                                         //開獎號碼
+                                         //單雙(0:開0 1:雙 2:單)
+                                         //大小(0:開0 1:小 2:大)
+                                         //紅黑(0:開0 1:紅 2:黑)
+                                         //組(0:開0, 1~3)
+                                         //列(0:開0, 1~3)
+  repeated int32 statistics         = 2; //長度為 6 的 各結果累計次數累計次數 (依序為紅、黑、大、小、單、雙)
+}
+
+//GL_TO_UC_CHANGE_PHASE           通知階段改變
+message GL_TO_UC_CHANGE_PHASE_T
+{
+  Phase phase                      = 1;  //當下的階段
+  Timing timing                    = 2;  //當下的時序
+  int32 countdown                  = 3;  //剩下的倒數時間 (若沒有倒數時間回傳 -1)
+}
+
+//GL_TO_UC_UPDATE_TABLE           更新桌面下注金額 (下注階段時定期刷新)
+message GL_TO_UC_UPDATE_TABLE_T {
+  int64 totalBetPoint              = 1;  //回傳下注區所有金額
+  repeated int64 betPoints         = 2;  //回傳下注金額陣列
+}
+
+//GL_TO_UC_SPIN_NUMBER            通知開球號碼
+message GL_TO_UC_SPIN_NUMBER_T {
+  int32 spinNumber                 = 1;  //開球號碼
+}
+
+//GL_TO_UC_SETTLE_RESULT          通知結算玩家輸贏結果
+message GL_TO_UC_SETTLE_RESULT_T
+{
+  int64 totalWinPoint              = 1;  //回傳玩家總共贏得金額 (包含本金)
+  repeated int64 winPoints         = 2;  //回傳玩家贏錢的下注金額陣列 (包含本金)
+}
+
+//GL_TO_FL_UPDATE_ROUND_INFO 更新局資訊
+message GL_TO_FL_UPDATE_ROUND_INFO_T {
+  int32 roundNumber                = 1; //局數
+}
+
+//GL_TO_UC_UPDATE_POINT_INFO           更新點數資訊
+message GL_TO_UC_UPDATE_POINT_INFO_T
+{
+  int64 point                      = 1; //點數 (不包含返水值)
+  int64 kickBackPoint              = 2; //返水值
+}

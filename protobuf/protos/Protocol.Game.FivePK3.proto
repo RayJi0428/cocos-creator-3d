@@ -1,0 +1,155 @@
+syntax = "proto3";
+package Protocol.Game.FivePK;
+
+//-------------------- 定義封包ID --------------------
+
+//command ID
+enum MessageID_FivePK
+{
+    MESSAGEID_FIVEPK_DEFAULT        = 0;  
+	UC_TO_GL_OPEN                   = 10012001;	//玩家下注
+	UC_TO_GL_HOLD					= 10012002;	//玩家保留牌
+	UC_TO_GL_SCORE					= 10012003;	//玩家得分
+	UC_TO_GL_MUCH					= 10012004;	//玩家比倍
+	UC_TO_GL_STATE_COMPLETED       	= 10012005;	//玩家演示完畢
+	UC_TO_GL_CHEAT_CODE         	= 10012021;	//使用作弊代碼
+	
+	GL_TO_UC_WAIT					= 20012001;	//回傳玩家待機
+	GL_TO_UC_OPEN					= 20012002;	//回傳玩家下注開牌
+	GL_TO_UC_HOLD					= 20012003;	//回傳玩家保留換牌
+	GL_TO_UC_DG_WAIT				= 20012004;	//回傳玩家比倍
+	GL_TO_UC_MUCH					= 20012005;	//回傳玩家比倍
+	GL_TO_UC_CHEAT_CODE         	= 20012021;	//回傳代碼結果
+	
+	GL_TO_UC_INIT_INFO				= 21012001;	//初始化玩家資訊
+	//GL_TO_UC_JP_INFO				= 21012002;	//初始JP資訊
+
+	GL_TO_UC_UPDATE_POINT			= 21012006;	//反水相關
+	
+}
+
+//--------------- 定義封包格式(C -> S) ---------------
+//UC_TO_GL_BET							玩家下注
+message UC_TO_GL_OPEN_T
+{
+    int64 llTotalBet 			= 1;	//玩家押注點數
+    bool bIsAuto				= 2;	//是否自動
+}
+
+//UC_TO_GL_HOLD							玩家保留牌
+message UC_TO_GL_HOLD_T
+{
+    repeated int32 holdArr				= 1;	//回傳玩家保留牌[長度5] 0:不保留 1:保留
+}
+
+//UC_TO_GL_SCORE						玩家取分
+message UC_TO_GL_SCORE_T
+{
+}
+
+//UC_TO_GL_MUCH							玩家比倍
+message UC_TO_GL_MUCH_T
+{
+    repeated int32 holdArr				= 1;	//回傳玩家保留牌[長度5] 0:不保留 1:保留
+}
+
+//UC_TO_GL_STATE_COMPLETED            玩家動畫演出結束(等待回傳某WAIT)
+message UC_TO_GL_STATE_COMPLETED_T {
+}
+
+//UC_TO_GL_CHEAT_CODE        使用作弊代碼
+message UC_TO_GL_CHEAT_CODE_T {
+    string command				= 1;	//作弊命令
+	// 0				Zero,                  //
+	// 1				AK,                    //
+	// 2				Pair,                  //
+	// 3				ThreeOfAKind,          //
+	// 4				Straight,              //
+	// 5				Flush,                 //
+	// 6				FullHouse,             //
+	// 7				FourOfAKind,           //
+	// 8				StraightFlush,         //	小柳
+	// 9				FiveOfAKind,           //	5梅
+	// 10				RoyalStraightFlush,    //	正大柳   帶鬼也行
+	// 11				Spadesroyal,           //	黑桃大柳 不帶鬼
+	// 12				FourOfAKind_By_Day,    //	當日正鐵
+	// 97				DG贏
+	// 98				DG輸
+	// 99,1,2,3,4,5		指定牌面
+}
+
+//--------------- 定義封包格式(S -> C) ---------------
+
+//GL_TO_UC_WAIT							回傳玩家待機
+message GL_TO_UC_WAIT_T
+{
+	int64 llCrd				= 1;	//點數
+    int64 kickPoint			= 2;	//反水值
+}
+
+//GL_TO_UC_OPEN							回傳玩家下注
+message GL_TO_UC_OPEN_T
+{
+	int32 resultCode			= 1;	//參考 resultCode
+	int64 llCrd 				= 2;	//點數
+	repeated int32 cardArr				= 3;	//回傳卡片長度[長度5] 方塊 梅花 紅心 黑桃 1~13 53紅小丑 54藍小丑(對應影格) 55牌背(沒牌的給牌背)
+	repeated int32 holdArr				= 4;	//回傳預設保留牌[長度5] 0:不保留 1:保留
+}
+
+//GL_TO_UC_HOLD							回傳玩家保留牌結果
+message GL_TO_UC_HOLD_T
+{
+	int64 llCrd 				= 1;	//點數
+	int64 llWin				    = 2;	//開牌贏分
+	repeated int32 cardArr				= 3;	//回傳卡片長度[長度5] 方塊 梅花 紅心 黑桃 1~13 53紅小丑 54藍小丑(對應影格) 55牌背(沒牌的給牌背)
+	repeated int32 holdArr				= 4;	//回傳玩家保留牌[長度5] 0:不保留 1:保留
+	int32 winBool				= 5;	//有無中獎(true:贏, false:輸)
+	int32 winType				= 6;	//獎項
+	// -1:無數據       3:順子    8:五梅
+	//  0:沒中         5:葫蘆    9:大柳
+	//  1:AK or 兩對   6:鐵支    10:正黑桃大柳
+	//  2:三條         7:小柳    11:當日正鐵
+	
+	//拉JP資料(未中為0)
+	int32 JPType				= 7;	//彩金類型(0:未中獎) 依序 1:黑桃正大柳 2: 大柳, 3; 五梅, 4:當日正鐵
+	int64 llJPWin				= 8;	//彩金金額
+	int64 llJPBefore           = 9;    //彩金拉之前
+	int64 llJPAfter            = 10;   //彩金拉之後
+}
+
+//GL_TO_UC_DG_WAIT						回傳等待比倍
+message GL_TO_UC_DG_WAIT_T
+{
+}
+
+//GL_TO_UC_MUCH							回傳玩家比倍
+message GL_TO_UC_MUCH_T
+{
+	int64 llCrd 				= 1;	//點數
+	int64 llDGWin				= 2;	//比倍贏分
+	repeated int32 cardArr				= 3;	//回傳卡片長度[長度5](第一張莊家 第二張玩家 剩下三張任意牌)
+	int32 result				= 4;	//比牌結果 0:輸 1:贏 2:和
+}
+
+//GL_TO_UC_CHEAT_CODE        回傳代碼結果
+message GL_TO_UC_CHEAT_CODE_T {
+    int32 resultCode			= 1;	//參考 ResultCode
+    string message              = 2;    //訊息回傳 iType=777 使用
+}
+
+//GL_TO_UC_INIT_INFO					初始化資訊
+message GL_TO_UC_INIT_INFO_T
+{
+	int32 tableId				= 1;	//桌號
+	int64 llMinBet 			= 2;	//最小押注
+	int64 llMaxBet 			= 3;	//最大押注
+	int64 llBetUnit 			= 4;	//押注值調整單位
+	double dRate 				= 5;	//機台比率(0.1:遊戲1分 Server10塊)
+}
+
+//GL_TO_UC_UPDATE_POINT_T				更新點數
+message GL_TO_UC_UPDATE_POINT_T
+{
+    int64 llCrd				= 1;	//點數
+    int64 kickPoint			= 2;	//反水值
+}
